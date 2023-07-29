@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"go_url_shortener/config"
 )
 
 func CommonMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fmt.Println(" 执行了中间件 ")
+		config.SugarLogger.Info(" 执行了中间件 ")
 		c.Next()
 	}
 }

@@ -1,15 +1,15 @@
-package util
+package config
 
 import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
+	"go.uber.org/zap"
 )
 
 var db *sql.DB
 
-// MySQLConfig 包含MySQL连接的配置选项
+// MySQLConfig 包含 MySQL 连接的配置选项
 type MySQLConfig struct {
 	User     string
 	Password string
@@ -18,7 +18,7 @@ type MySQLConfig struct {
 	Database string
 }
 
-// NewMySQLConfig 创建一个MySQLConfig对象，并设置默认值
+// NewMySQLConfig 创建一个 MySQLConfig 对象，并设置默认值
 func NewMySQLConfig() *MySQLConfig {
 	return &MySQLConfig{
 		User:     "root",   // 默认用户名
@@ -29,39 +29,39 @@ func NewMySQLConfig() *MySQLConfig {
 	}
 }
 
-// WithUser 设置MySQLConfig的用户名
+// WithUser 设置 MySQLConfig 的用户名
 func (cfg *MySQLConfig) WithUser(user string) *MySQLConfig {
 	cfg.User = user
 	return cfg
 }
 
-// WithPassword 设置MySQLConfig的密码
+// WithPassword 设置 MySQLConfig 的密码
 func (cfg *MySQLConfig) WithPassword(password string) *MySQLConfig {
 	cfg.Password = password
 	return cfg
 }
 
-// WithHost 设置MySQLConfig的主机地址
+// WithHost 设置 MySQLConfig 的主机地址
 func (cfg *MySQLConfig) WithHost(host string) *MySQLConfig {
 	cfg.Host = host
 	return cfg
 }
 
-// WithPort 设置MySQLConfig的端口号
+// WithPort 设置 MySQLConfig 的端口号
 func (cfg *MySQLConfig) WithPort(port string) *MySQLConfig {
 	cfg.Port = port
 	return cfg
 }
 
-// WithDatabase 设置MySQLConfig的数据库名
+// WithDatabase 设置 MySQLConfig 的数据库名
 func (cfg *MySQLConfig) WithDatabase(database string) *MySQLConfig {
 	cfg.Database = database
 	return cfg
 }
 
-// init函数在包被导入时自动执行
-func init() {
-	// 使用options模式初始化MySQL连接
+// InitDB 函数手动控制初始化顺序
+func InitDB() {
+	// 使用 options 模式初始化 MySQL 连接
 	cfg := NewMySQLConfig().WithUser("root").WithPassword("123456").WithDatabase("short_url")
 	// 构建数据源名称
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
@@ -69,16 +69,16 @@ func init() {
 	var err error
 	db, err = sql.Open("mysql", dataSourceName)
 	if err != nil {
-		log.Fatal("无法连接到数据库:", err)
+		SugarLogger.Error(" 无法连接到数据库:", zap.Error(err))
 	}
 
 	// 尝试连接数据库
 	err = db.Ping()
 	if err != nil {
-		log.Fatal("数据库连接失败:", err)
+		SugarLogger.Error(" 数据库连接失败:", zap.Error(err))
 	}
 
-	fmt.Println("数据库连接成功！")
+	SugarLogger.Info(" 数据库连接成功！")
 }
 
 // GetDB 返回数据库实例

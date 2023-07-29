@@ -1,8 +1,9 @@
 package biz
 
 import (
+	"go.uber.org/zap"
+	"go_url_shortener/config"
 	"go_url_shortener/util"
-	"log"
 )
 
 func GetSourceUrl(code string) string {
@@ -10,9 +11,9 @@ func GetSourceUrl(code string) string {
 	query := "select url from shortener_url where short_url=?"
 
 	// 执行查询
-	rows, err := util.GetDB().Query(query, code)
+	rows, err := config.GetDB().Query(query, code)
 	if err != nil {
-		log.Println("查询记录时出现错误:", err)
+		config.SugarLogger.Error(" 查询记录时出现错误:", zap.Error(err))
 	}
 
 	var url string
@@ -27,9 +28,9 @@ func GetSourceUrl(code string) string {
 
 func SaveSourceUrl(sourceUrl string) string {
 	code := util.ShortUrl32(sourceUrl)
-	_, err := util.GetDB().Exec("insert into shortener_url (url,short_url) values (?,?)", sourceUrl, code)
+	_, err := config.GetDB().Exec("insert into shortener_url (url,short_url) values (?,?)", sourceUrl, code)
 	if err != nil {
-		log.Println("保存记录时出现错误:", err)
+		config.SugarLogger.Error(" 保存记录时出现错误:", zap.Error(err))
 	}
 	return code
 }
