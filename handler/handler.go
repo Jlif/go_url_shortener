@@ -1,50 +1,43 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"go_url_shortener/biz"
 	"net/http"
 )
 
-// w表示response对象，返回给客户端的内容都在对象里处理
-// r表示客户端请求对象，包含了请求头，请求参数等等
-func GetUrl(w http.ResponseWriter, r *http.Request) {
-	uri := r.RequestURI
-	fmt.Printf("传入的uri路径为：%s\n", uri)
-	//去掉'/'
-	uri = uri[1:]
-	if len(uri) > 6 {
-		fmt.Fprintf(w, "invalid short url, please check...")
+func GetUrlHandler(c *gin.Context) {
+	code := c.Param("code")
+	fmt.Printf(" 传入的 code 为：%s\n", code)
+
+	if len(code) > 6 {
+		c.JSON(http.StatusOK, "invalid short url, please check...")
 		return
 	}
-	url := biz.GetSourceUrl(uri)
+	url := biz.GetSourceUrl(code)
 	if url == "" {
-		fmt.Fprintf(w, "can't find mapping url, please check your short url.")
+		c.JSON(http.StatusOK, "can't find mapping url, please check your short url.")
 		return
 	}
-	http.Redirect(w, r, url, http.StatusFound)
+	// 重定向
+	c.Redirect(http.StatusMovedPermanently, url)
 }
 
 type SaveUrlParam struct {
 	Url string `json:"url"`
 }
 
-func SaveUrl(w http.ResponseWriter, r *http.Request) {
-	uri := r.RequestURI
-	fmt.Printf("传入的uri路径为：%s\n", uri)
-	// 读取请求Body数据
+func SaveUrlHandler(c *gin.Context) {
+	// 读取请求 Body 数据
 	var param SaveUrlParam
-	err := json.NewDecoder(r.Body).Decode(&param)
-	if err != nil {
-		http.Error(w, "无法解析JSON对象", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&param); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": " 无法解析 JSON 对象 "})
 		return
 	}
-	defer r.Body.Close()
 
-	// 打印解析后的JSON对象
-	fmt.Printf("解析后的JSON对象:%v\n", param)
+	// 打印解析后的 JSON 对象
+	fmt.Printf(" 解析后的 JSON 对象:%v\n", param)
 	biz.SaveSourceUrl(param.Url)
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, "{\"success\":true}")
+	c.JSON(200, gin.H{"message": " 成功 "})
 }
